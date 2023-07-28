@@ -1,0 +1,17 @@
+{
+    "name": "node.js-training",
+    "version": "1.0.0",
+    "description": "Node.js on Docker",
+    "author": "benoit <benoit.berche@gmail.com>",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "body-parser": "^1.20.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.0.3",
+        "express": "^4.16.1",
+        "mongoose": "^7.0.3"
+    }
+}

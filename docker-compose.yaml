@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+
+ react:
+    container_name: react
+    build:
+        context: ./client
+    ports:
+      - 3000:3000
+    volumes:
+      - ./client:/app
+    command: ["npm", "start"]
+
+ nodejs:
+    container_name: nodejs
+    build:
+        context: ./server
+    ports:
+      - 3001:3001
+    volumes:
+      - ./server:/app
+    command: ["npm", "start"]
+
+ mongo:
+    container_name: mongo
+    build:
+        context: ./database
+    ports:
+      - 27017:27017
+    volumes:
+      - ./database/data:/data/db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+ mongo-express:
+    container_name: mongo-express
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+
+volumes:
+  database:
