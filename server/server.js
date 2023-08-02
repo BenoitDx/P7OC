@@ -23,7 +23,7 @@ mongoose.connect(mongoDBURL, {
     console.error('Connexion à MongoDB échouée :', error);
   });
 
-// Middlewares pour analyser le corps de la requête
+// middleware pour analyser le corps de la requête
 app.use(express.json());
 app.use(cors());
 
