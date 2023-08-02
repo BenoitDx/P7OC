@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
+const userRouter = require('./route/user')
+const cors = require('cors');
 
 // Configuration de la connexion à MongoDB
 const mongoDBURL = 'mongodb://root:example@mongo:27017/';
@@ -10,7 +12,7 @@ mongoose.connect(mongoDBURL, {
 })
   .then(() => {
     console.log('Connexion à MongoDB réussie !');
-    // Vous pouvez lancer le serveur ici ou exécuter d'autres actions après la connexion réussie.
+
     const port = process.env.PORT || 3001;
     app.listen(port, () => {
       console.log(`Le serveur écoute sur le port ${port}`);
@@ -20,20 +22,24 @@ mongoose.connect(mongoDBURL, {
     console.error('Connexion à MongoDB échouée :', error);
   });
 
-// Exemple de route simple pour tester la connexion à la base de données
+// Middlewares pour analyser le corps de la requête
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+
+// route  pour tester la connexion à la base de données
 app.get('/health', (req, res) => {
   res.send('Le serveur est en ligne et connecté à la base de données.');
 });
 
-// Autres configurations et routes de votre application backend
-// ...
-
-// Gestionnaire d'événement en cas de déconnexion de la base de données
+// Gestionnaire d'événement en cas de déconnexion 
 mongoose.connection.on('disconnected', () => {
   console.log('Déconnexion de la base de données.');
 });
 
-// Gestionnaire d'événement en cas d'erreur de connexion à la base de données
+// Gestionnaire d'événement en cas d'erreur 
 mongoose.connection.on('error', (error) => {
   console.error('Erreur de connexion à la base de données :', error);
 });
+
+app.use('/api/auth', userRouter);
