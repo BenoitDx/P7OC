@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const app = express();
 const userRouter = require('./route/user')
 const cors = require('cors');
+const booksRoutes = require('./route/books'); 
 
 // Configuration de la connexion à MongoDB
 const mongoDBURL = 'mongodb://root:example@mongo:27017/';
@@ -42,3 +43,4 @@ mongoose.connection.on('error', (error) => {
 });
 
 app.use('/api/auth', userRouter);
+app.use('/api/books', booksRoutes);
