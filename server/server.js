@@ -24,7 +24,6 @@ mongoose.connect(mongoDBURL, {
 
 // Middlewares pour analyser le corps de la requête
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // route  pour tester la connexion à la base de données
