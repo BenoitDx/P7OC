@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
 const userRouter = require('./route/user')
-const cors = require('cors');
 const booksRoutes = require('./route/books'); 
 
 // Configuration de la connexion à MongoDB
@@ -23,9 +22,16 @@ mongoose.connect(mongoDBURL, {
     console.error('Connexion à MongoDB échouée :', error);
   });
 
-// middleware pour analyser le corps de la requête
+// Middleware pour parser les requêtes JSON
 app.use(express.json());
-app.use(cors());
+
+// Gestion des requêtes cross-origin (CORS)
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  next();
+});
 
 // route  pour tester la connexion à la base de données
 app.get('/health', (req, res) => {
