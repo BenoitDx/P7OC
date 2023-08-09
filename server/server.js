@@ -1,8 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const app = express();
 const userRouter = require('./route/user')
 const booksRoutes = require('./route/books'); 
+const path = require('path');
 
 // Configuration de la connexion à MongoDB
 const mongoDBURL = 'mongodb://root:example@mongo:27017/';
@@ -22,31 +22,23 @@ mongoose.connect(mongoDBURL, {
     console.error('Connexion à MongoDB échouée :', error);
   });
 
-// Middleware pour parser les requêtes JSON
-app.use(express.json());
-
-// Gestion des requêtes cross-origin (CORS)
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  next();
-});
-
-// route  pour tester la connexion à la base de données
-app.get('/health', (req, res) => {
-  res.send('Le serveur est en ligne et connecté à la base de données.');
-});
-
-// Gestionnaire d'événement en cas de déconnexion 
-mongoose.connection.on('disconnected', () => {
-  console.log('Déconnexion de la base de données.');
-});
-
-// Gestionnaire d'événement en cas d'erreur 
-mongoose.connection.on('error', (error) => {
-  console.error('Erreur de connexion à la base de données :', error);
-});
-
-app.use('/api/auth', userRouter);
-app.use('/api/books', booksRoutes);
+  const app = express();
+  app.use(express.json());
+  
+  app.use((req, res, next) => {
+    // permet d'accéder à notre API depuis n'importe quelle origine ('*')
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    // permet d'ajouter les headers mentionnés aux requêtes envoyées vers notre API ('Origin, X-Requested-With ...')
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
+    // permet d'envoyer des requêtes avec les différentes méthodes metntionnées ('GET, POST, PUT, DELETE ...')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    next();
+  });
+  
+  // enregistrement du système de routes (routeur) ppur chaque demandes faites vers '/api/books'
+  app.use('/api/books', booksRoutes);
+  // enregistrement du système de routes (routeur) ppur chaque demandes faites vers '/api/auth'
+  app.use('/api/auth', userRouter);
+  app.use('/images', express.static(path.join(__dirname, 'images')));
+  
+  module.exports = app;

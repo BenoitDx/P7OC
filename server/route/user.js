@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const userCtrl = require('../controllers/user');
+const userControllers = require('../controllers/user');
 
-router.post('/signup', userCtrl.signup);
-router.post('/login', userCtrl.login);
+// routes permettant d'accèder soit à la connexion soit à l'inscription
+router.post('/signup', userControllers.signup);
+router.post('/login', userControllers.login);
 
 module.exports = router;
