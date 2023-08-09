@@ -7,7 +7,7 @@ const optimizeImageMiddleware = require('../middleware/sharp');
 
 const bookControllers = require('../controllers/books');
 
-// routes permettant soit de récupérer un livre, tout les livres, de le supprimer ou de le modifier, ou encore de le noter et de récupérer les livres les mieux notés
+// routes permettant de récupérer un livre, tout les livres, de le supprimer ou de le modifier, ou encore de le noter et de récupérer les livres les mieux notés
 router.post('/', auth, multer, optimizeImageMiddleware, bookControllers.createBook);
 router.get('/', bookControllers.getAllBooks);
 router.get('/bestrating', bookControllers.bestRating);
