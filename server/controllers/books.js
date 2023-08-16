@@ -1,145 +1,138 @@
-// importation du modèle 'Book'
+// Importation du modèle 'Book'
 const Book = require('../models/book');
+// Importation du module 'fs' pour les opérations de système de fichiers
 const fs = require('fs');
-const { log } = require("console");
 
-
-// création d'un nouveau livre
+// Création d'un nouveau livre
 exports.createBook = (req, res, next) => {
+    // Conversion de la chaîne JSON en objet pour obtenir les détails du livre
     const bookObject = JSON.parse(req.body.book);
-    // suppression des id du livre et de l'utilisateur généré par mongoDB
+    // Suppression des identifiants du livre et de l'utilisateur générés par MongoDB
     delete bookObject._id;
     delete bookObject._userId;
 
-    // création d'une nouvelle instance de 'Book' en utilisant le model de 'Book'
+    // Création d'une nouvelle instance de 'Book' en utilisant le modèle 'Book'
     const book = new Book({
-      ...bookObject,
-      // attribution d'un id à l'utilisateur
-      userId: req.auth.userId,
-      // 
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        ...bookObject,
+        // Attribution de l'ID de l'utilisateur
+        userId: req.auth.userId,
+        // Construction de l'URL de l'image en utilisant le protocole et l'hôte
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     });
-    // utilisation de 'save()' afin de pouvoir enregistrer un nouveau livre dans la base de données
+
+    // Enregistrement du nouveau livre dans la base de données
     book.save()
-      // un message pour dire que le lire a été ajouté apparait
-      .then(() => res.status(201).json({ message: 'Votre livre a bien été enregistré !'}))
-      // si le livre n'est pas créé alors un messsage d'erreur apparait
-      .catch(error => res.status(400).json({error}));
+        .then(() => res.status(201).json({ message: 'Votre livre a bien été enregistré !' }))
+        .catch(error => res.status(400).json({ error }));
 };
 
-// permet de mettre à jour un livre
+// Mise à jour d'un livre existant
 exports.updateBook = (req, res, next) => {
+    // Construction de l'objet du livre à mettre à jour, incluant une éventuelle nouvelle image
     const bookObject = req.file ? {
-      ...JSON.parse(req.body.book),
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    } : { ...req.body};
+        ...JSON.parse(req.body.book),
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+    } : { ...req.body };
 
+    // Suppression de l'ID utilisateur du livre à mettre à jour
     delete bookObject._userId;
-    // utilisation de 'findOne()' pour trouver le livre ayant le même '_id' aue le paramètre et la requête 
-    Book.findOne({_id: req.params.id})
-    // le 'Book' est retourné dans une Promise et envoyé au frontend
-      .then((book) => {
-        // si l'utilisateur n'a pas l'autorisation alors un messsage d'erreur apparait
-        if(book.userId != req.auth.userId) {
-          res.status(401).json({message: "Vous n'avez pas l'autorisation requise."})
-        } else {
-          Book.updateOne({_id: req.params.id}, { ...bookObject, _id: req.params.id})
-            .then(() => res.status(200).json({ message: 'Votre livre a bien été modifié !'}))
-            .catch(error => res.status(401).json({error}));
-        }
-      })
-      .catch(error => res.status(400).json({error}));
+
+    // Recherche du livre à mettre à jour en utilisant son ID
+    Book.findOne({ _id: req.params.id })
+        .then((book) => {
+            // Vérification si l'utilisateur a l'autorisation de modifier ce livre
+            if (book.userId !== req.auth.userId) {
+                res.status(401).json({ message: "Vous n'avez pas l'autorisation requise." });
+            } else {
+                // Mise à jour du livre avec les nouvelles informations
+                Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
+                    .then(() => res.status(200).json({ message: 'Votre livre a bien été modifié !' }))
+                    .catch(error => res.status(401).json({ error }));
+            }
+        })
+        .catch(error => res.status(400).json({ error }));
 };
 
-// permet de supprimer un livre précis
+// Suppression d'un livre spécifique
 exports.deleteBook = (req, res, next) => {
-    // ajout du paramètre à prendre en compte, ici l'id du livre
-    // utilisation de la méthode 'findOne()' pour récupérer le livre auquel l'id corresponds
-    Book.findOne({_id: req.params.id})
-      .then(book => {
-        // si ce n'est pas l'utilisateur qui l'a ajouté alors il ne peut pas supprimer le livre
-        if(book.userId != req.auth.userId) {
-          res.status(401).json({message: "Vous n'avez pas l'autorisation requise."})
-        } else {
-          // sinon il peut modifier le livre
-          const filename = book.imageUrl.split('/images/')[1];
-          fs.unlink(`images/${filename}`, () => {
-            // utilisation de la méthode 'deleteOne' avec en paramètre l'id du livre afin de pouvoir supprimer le bon livre sélectionné
-            Book.deleteOne({_id: req.params.id})
-            .then(() => res.status(200).json({message: "Votre livre est supprimé."}))
-            .catch(error => res.status(401).json({error}));
-          });
-        }
-      })
-      .catch(error => res.status(500).json({error}));
+    // Recherche du livre à supprimer en utilisant son ID
+    Book.findOne({ _id: req.params.id })
+        .then(book => {
+            // Vérification si l'utilisateur a l'autorisation de supprimer ce livre
+            if (book.userId !== req.auth.userId) {
+                res.status(401).json({ message: "Vous n'avez pas l'autorisation requise." });
+            } else {
+                // Suppression de l'image associée au livre du système de fichiers
+                const filename = book.imageUrl.split('/images/')[1];
+                fs.unlink(`images/${filename}`, () => {
+                    // Suppression du livre de la base de données
+                    Book.deleteOne({ _id: req.params.id })
+                        .then(() => res.status(200).json({ message: "Votre livre est supprimé." }))
+                        .catch(error => res.status(401).json({ error }));
+                });
+            }
+        })
+        .catch(error => res.status(500).json({ error }));
 };
 
-// permet de récupérer un livre précis
+// Récupération d'un livre spécifique
 exports.getOneBook = (req, res, next) => {
-    // ajout du paramètre à prendre en compte, ici l'id du livre
-    // utilisation de la méthode 'findOne()' pour récupérer le livre auquel l'id corresponds
-    Book.findOne({_id: req.params.id})
-      // promise qui renvoit le livre en question et est envoyé au front end
-      .then(book => res.status(200).json(book))
-      .catch(error => res.status(404).json({error}));
+    // Recherche du livre en utilisant son ID
+    Book.findOne({ _id: req.params.id })
+        .then(book => res.status(200).json(book))
+        .catch(error => res.status(404).json({ error }));
 };
 
-// permet de récupérer tout les livres
+// Récupération de tous les livres
 exports.getAllBooks = (req, res, next) => {
-  // utilisation de la méthode 'find()' de mongoose afin de récupérer tout les livres de la base de données
+    // Recherche de tous les livres dans la base de données
     Book.find()
-      // promise qui renvoit tout les livres si la requête est bonne et est envoyé au front end
-      .then(books => res.status(200).json(books))
-      // renvoit une erreur en cas de probléme 
-      .catch(error => res.status(400).json({error}));
+        .then(books => res.status(200).json(books))
+        .catch(error => res.status(400).json({ error }));
 };
 
-// route addRating qui permet à un utilisateur d'ajouter une note à livre et de faire la moyenne de toutes les notes
+// Route 'addRating' pour ajouter une note à un livre et calculer la moyenne
 exports.addRating = (req, res, next) => {
-  const { userId, rating } = req.body;
+    const { userId, rating } = req.body;
 
-  //  utilisation de la méthode 'findById()' qui permet de chercher un livre en fonction de son id
-  Book.findById(req.params.id)
-    .then(book => {
-      // permet de vérifier si l'utilisateur a déjà noté le livre
-      const alreadyRated = book.ratings.find(rating => rating.userId === userId);
-      if (alreadyRated) {
-        return res.status(401).json({ message: "Vous avez déjà attribué une note à ce livre." });
-      }
+    // Recherche du livre en utilisant son ID
+    Book.findById(req.params.id)
+        .then(book => {
+            // Vérification si l'utilisateur a déjà noté le livre
+            const alreadyRated = book.ratings.find(rating => rating.userId === userId);
+            if (alreadyRated) {
+                return res.status(401).json({ message: "Vous avez déjà attribué une note à ce livre." });
+            }
 
-      // permet d'ajouter la nouvelle notation à la liste des évaluations du livre
-      const newRating = { userId, grade: rating };
-      book.ratings.push(newRating);
+            // Ajout de la nouvelle notation à la liste des évaluations du livre
+            const newRating = { userId, grade: rating };
+            book.ratings.push(newRating);
 
-      // Calcule la nouvelle note moyenne en tenant compte de la nouvelle notation
-      const allRatings = book.ratings.map(rating => rating.grade);
-      const totalRatings = allRatings.reduce((sum, current) => sum + current, 0);
-      const averageRating = totalRatings / book.ratings.length;
-      const roundedAverageRating = Math.round(averageRating * 100) / 100; // Arrondi à deux décimales
+            // Calcul de la nouvelle note moyenne en tenant compte de la nouvelle notation
+            const allRatings = book.ratings.map(rating => rating.grade);
+            const totalRatings = allRatings.reduce((sum, current) => sum + current, 0);
+            const averageRating = totalRatings / book.ratings.length;
+            const roundedAverageRating = Math.round(averageRating * 100) / 100; // Arrondi à deux décimales
 
-      // Met à jour la note moyenne du livre dans l'objet book
-      book.averageRating = roundedAverageRating;
+            // Mise à jour de la note moyenne du livre dans l'objet book
+            book.averageRating = roundedAverageRating;
 
-      // Sauvegarde le livre mis à jour
-      book.save()
-      .then(() => {
-        // Renvoi du livre mis à jour dans la réponse
-        res.status(200).json(book);
-      })
-    })
-    .catch(error => res.status(400).json({ error }));
+            // Sauvegarde du livre mis à jour
+            book.save()
+                .then(() => {
+                    // Renvoi du livre mis à jour dans la réponse
+                    res.status(200).json(book);
+                })
+        })
+        .catch(error => res.status(400).json({ error }));
 };
 
-// route bestRating permet de récupérer les 3 meilleurs livres notés
+// Route 'bestRating' pour récupérer les 3 meilleurs livres notés
 exports.bestRating = (req, res, next) => {
-  // on utilise la méthode find() de Mongoose qui récupère tout les livres présents dans la collection
-  Book.find()
-    // permet de trier les livres en fonction de leurs notes de façon décroissante 
-    .sort({averageRating: -1})
-    // permet de limiter le nombre de livres à 3
-    .limit(3)
-    // reponse qui renvoit les 3 livres les mieux notés
-    .then(bestRatedBook => res.status(200).json(bestRatedBook))
-    // renvoit une erreur en cas de probléme 
-    .catch(error => res.status(400).json({error}))
+    // Recherche de tous les livres dans la base de données, triés par note moyenne décroissante
+    Book.find()
+        .sort({ averageRating: -1 })
+        .limit(3) // Limiter aux 3 meilleurs
+        .then(bestRatedBooks => res.status(200).json(bestRatedBooks))
+        .catch(error => res.status(400).json({ error }));
 };

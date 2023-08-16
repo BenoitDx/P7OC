@@ -10,19 +10,19 @@ const optimizeImage = (req, res, next) => {
     // vérification s'il y a une image ou non
     if (!req.file) return next();
 
-    // si l'image existe elle est stockée dans cette variable
+    //  Si une image est présente, enregistrer le chemin de l'image originale
     const imageInput = req.file.path;
-    // permet la sortie de l'image en étant optimisée
+    // Préparer le chemin pour la sortie de l'image optimisée
     const imageOutput = req.file.path.replace(/\.(jpg|jpeg|png)$/, ".webp");
-
+    // Utiliser 'sharp' pour effectuer les transformations sur l'image
     sharp(imageInput)
-    // permet de redimensionner les images uploader par les utilisateurs
+    // Redimensionner l'image téléchargée par les utilisateurs
     .resize({ width: 200 })
-    // permet changement de format des images uploader par les utilisateurs
+    // Changer le format de l'image en format WebP
     .toFormat('webp')
-    // permet de récupérer l'image optimisée
+    // Enregistrer l'image optimisée au chemin de sortie
     .toFile(imageOutput)
-    // s'il n'y a eu aucunes erreurs alors on peut passer au 'then'
+    // s'il n'y a eu aucunes erreurs passer au 'then'
     .then(() => {
       // Supprime l'ancienne image non optimisée
       fs.unlinkSync(imageInput);

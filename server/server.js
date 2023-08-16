@@ -1,47 +1,44 @@
-const http = require('http');
-const app = require('./app');
+const express = require('express');
+const mongoose = require('mongoose');
+const userRouter = require('./route/user')
+const booksRoutes = require('./route/books'); 
+const path = require('path');
 
-const normalizePort = val => {
-  const port = parseInt(val, 10);
+// Configuration de la connexion à MongoDB
+const mongoDBURL = 'mongodb://root:example@mongo:27017/';
+mongoose.connect(mongoDBURL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+  .then(() => {
+    console.log('Connexion à MongoDB réussie !');
 
-  if (isNaN(port)) {
-    return val;
-  }
-  if (port >= 0) {
-    return port;
-  }
-  return false;
-};
-const port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+    const port = process.env.PORT || 3001;
+    app.listen(port, () => {
+      console.log(`Le serveur écoute sur le port ${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Connexion à MongoDB échouée :', error);
+  });
 
-const errorHandler = error => {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
-  const address = server.address();
-  const bind = typeof address === 'string' ? 'pipe ' + address : 'port: ' + port;
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges.');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use.');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
-};
-
-const server = http.createServer(app);
-
-server.on('error', errorHandler);
-server.on('listening', () => {
-  const address = server.address();
-  const bind = typeof address === 'string' ? 'pipe ' + address : 'port ' + port;
-  console.log('Listening on ' + bind);
-});
-
-server.listen(port);
+  const app = express();
+  app.use(express.json());
+  
+  app.use((req, res, next) => {
+    // permet d'accéder à notre API depuis n'importe quelle origine ('*')
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    // permet d'ajouter les headers mentionnés aux requêtes envoyées vers notre API ('Origin, X-Requested-With ...')
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
+    // permet d'envoyer des requêtes avec les différentes méthodes metntionnées ('GET, POST, PUT, DELETE ...')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    next();
+  });
+  
+  // enregistrement du système de routes 
+  app.use('/api/books', booksRoutes);
+  // enregistrement du système de routes 
+  app.use('/api/auth', userRouter);
+  app.use('/images', express.static(path.join(__dirname, 'images')));
+  
+  module.exports = app;
