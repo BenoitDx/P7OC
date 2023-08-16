@@ -19,7 +19,7 @@ const bookSchema = mongoose.Schema({
     averageRating: {type: Number, default: 0}
 });
 
-// garantir que certaines données soient uniques dans la collection MongoDB
+// données soient uniques dans la collection MongoDB
 bookSchema.plugin(uniqueValidator);
 
 // exportation du schéma 

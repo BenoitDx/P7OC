@@ -1,11 +1,13 @@
 // importation du modèle 'Book'
 const Book = require('../models/book');
 const fs = require('fs');
+const { log } = require("console");
 
-// permet la création d'un nouveau livre
+
+// création d'un nouveau livre
 exports.createBook = (req, res, next) => {
     const bookObject = JSON.parse(req.body.book);
-    // suppression des id du livre et de l'utilisateur généré automatiquement par mongoDB
+    // suppression des id du livre et de l'utilisateur généré par mongoDB
     delete bookObject._id;
     delete bookObject._userId;
 
@@ -88,7 +90,7 @@ exports.getAllBooks = (req, res, next) => {
     Book.find()
       // promise qui renvoit tout les livres si la requête est bonne et est envoyé au front end
       .then(books => res.status(200).json(books))
-      // sinon il y a un message d'error
+      // renvoit une erreur en cas de probléme 
       .catch(error => res.status(400).json({error}));
 };
 
@@ -136,8 +138,8 @@ exports.bestRating = (req, res, next) => {
     .sort({averageRating: -1})
     // permet de limiter le nombre de livres à 3
     .limit(3)
-    // reponse de la requête qui renvoit les 3 livres les mieux notés
+    // reponse qui renvoit les 3 livres les mieux notés
     .then(bestRatedBook => res.status(200).json(bestRatedBook))
-    // renvoit une erreur s'il y a un problème
+    // renvoit une erreur en cas de probléme 
     .catch(error => res.status(400).json({error}))
 };
